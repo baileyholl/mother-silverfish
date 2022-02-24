@@ -29,7 +29,7 @@ public class EntityRegistry {
            ENTITY_MOTHER_SILVER = build(
                     "mother_silverfish",
                     EntityType.Builder.of(MotherSilverfishEntity::new, MobCategory.MONSTER)
-                            .sized(0.5f, 0.5f)
+                            .sized(2f, 1.7f)
                             .setTrackingRange(10));
             POISON_FISH = build(
                     "poison_silverfish",
@@ -52,7 +52,7 @@ public class EntityRegistry {
 
         @SubscribeEvent
         public static void registerEntities(final EntityAttributeCreationEvent event) {
-            event.put(ENTITY_MOTHER_SILVER, BabyFish.attributes().build());
+            event.put(ENTITY_MOTHER_SILVER, MotherSilverfishEntity.attributes().build());
             event.put(POISON_FISH, BabyFish.attributes().build());
             event.put(HEALTH_STEAL_FISH, BabyFish.attributes().build());
             event.put(ITEM_STEAL_FISH, BabyFish.attributes().build());

@@ -17,7 +17,7 @@ public class BabyPoisonFish extends BabyFish {
     @Override
     public boolean doHurtTarget(Entity pEntity) {
         if(!level.isClientSide && pEntity instanceof LivingEntity livingEntity){
-            livingEntity.addEffect(new MobEffectInstance(MobEffects.POISON, Config.POISON_LEVEL.get(), Config.POISON_DURATION.get()));
+            livingEntity.addEffect(new MobEffectInstance(MobEffects.POISON, Config.POISON_DURATION.get(), Config.POISON_LEVEL.get()));
         }
         return super.doHurtTarget(pEntity);
     }

@@ -48,7 +48,6 @@ public class ChargeGoal extends Goal {
     @Override
     public void tick() {
         super.tick();
-        System.out.println("charging");
 
         if(timeCharging >= 105) {
             endRam();
@@ -127,7 +126,6 @@ public class ChargeGoal extends Goal {
             boss.chargeCooldown = boss.getChargeCooldown();
         }
         boss.isCharging = false;
-//        Networking.sendToNearby(boss.level, boss, new PacketAnimEntity(boss.getId(), EntityChimera.Animations.ATTACK.ordinal()));
         attack();
     }
 

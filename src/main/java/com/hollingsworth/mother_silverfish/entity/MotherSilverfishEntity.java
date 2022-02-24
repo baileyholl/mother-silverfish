@@ -3,29 +3,56 @@ package com.hollingsworth.mother_silverfish.entity;
 import com.hollingsworth.mother_silverfish.Config;
 import com.hollingsworth.mother_silverfish.entity.goals.ChargeGoal;
 import com.hollingsworth.mother_silverfish.setup.EntityRegistry;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.server.level.ServerBossEvent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.BossEvent;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Silverfish;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import software.bernie.geckolib3.core.IAnimatable;
+import software.bernie.geckolib3.core.PlayState;
+import software.bernie.geckolib3.core.builder.AnimationBuilder;
+import software.bernie.geckolib3.core.controller.AnimationController;
+import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
+import software.bernie.geckolib3.core.manager.AnimationData;
+import software.bernie.geckolib3.core.manager.AnimationFactory;
 
-public class MotherSilverfishEntity extends Silverfish implements IAnimationListener, IAnimatable {
+public class MotherSilverfishEntity extends Monster implements IAnimationListener, IAnimatable {
+
+    private final ServerBossEvent bossEvent = (ServerBossEvent)(new ServerBossEvent(this.getDisplayName(), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS)).setDarkenScreen(true).setCreateWorldFog(true).setPlayBossMusic(true);
+
+
     public int earthquakeCooldown;
     public int spawnCooldown;
     public int chargeCooldown;
     public boolean isCharging;
 
 
-    public MotherSilverfishEntity(EntityType<? extends Silverfish> p_33002_, Level p_33003_) {
+    public MotherSilverfishEntity(EntityType<? extends Monster> p_33002_, Level p_33003_) {
         super(p_33002_, p_33003_);
+        maxUpStep = 2.0f;
+        setPersistenceRequired();
+    }
+
+    @Override
+    public void setYBodyRot(float pOffset) {
+        this.yBodyRot = pOffset;
     }
 
     @Override
@@ -40,11 +67,25 @@ public class MotherSilverfishEntity extends Silverfish implements IAnimationList
         if(chargeCooldown > 0)
             chargeCooldown--;
 
-        if(!level.isClientSide && spawnCooldown <= 0){
+        if(!level.isClientSide && spawnCooldown <= 0 && getTarget() != null){
             Silverfish silverfish = getSpawn();
             level.addFreshEntity(silverfish);
             spawnCooldown = getSpawnCooldown();
         }
+    }
+
+    @Override
+    public MobType getMobType() {
+        return MobType.ARTHROPOD;
+    }
+
+    protected float getStandingEyeHeight(Pose pPose, EntityDimensions pSize) {
+        return 1.0f;
+    }
+
+    @Override
+    protected AABB makeBoundingBox() {
+        return super.makeBoundingBox();
     }
 
     public BabyFish getSpawn(){
@@ -106,7 +147,27 @@ public class MotherSilverfishEntity extends Silverfish implements IAnimationList
 
     public static AttributeSupplier.Builder attributes() {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 6.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.2d).add(Attributes.ATTACK_DAMAGE, 2.0f);
+                .add(Attributes.MOVEMENT_SPEED, 0.28D).add(Attributes.ATTACK_DAMAGE, 2.0f);
+    }
+
+    protected Entity.MovementEmission getMovementEmission() {
+        return Entity.MovementEmission.EVENTS;
+    }
+
+    protected SoundEvent getAmbientSound() {
+        return SoundEvents.SILVERFISH_AMBIENT;
+    }
+
+    protected SoundEvent getHurtSound(DamageSource pDamageSource) {
+        return SoundEvents.SILVERFISH_HURT;
+    }
+
+    protected SoundEvent getDeathSound() {
+        return SoundEvents.SILVERFISH_DEATH;
+    }
+
+    protected void playStepSound(BlockPos pPos, BlockState pBlock) {
+        this.playSound(SoundEvents.SILVERFISH_STEP, 0.15F, 1.0F);
     }
 
     public int getCooldownModifier() {
@@ -114,8 +175,98 @@ public class MotherSilverfishEntity extends Silverfish implements IAnimationList
     }
 
     @Override
-    public void startAnimation(int arg) {
+    public boolean hurt(DamageSource pSource, float pAmount) {
+        return super.hurt(pSource, pAmount);
+    }
 
+    @Override
+    public boolean doHurtTarget(Entity pEntity) {
+        if(pEntity instanceof Silverfish)
+            return false;
+
+        return super.doHurtTarget(pEntity);
+    }
+
+    @Override
+    public void startAnimation(int arg) {
+        try {
+            if (arg == Animations.CHARGE.ordinal()) {
+                if (attackController.getCurrentAnimation() != null && (attackController.getCurrentAnimation().animationName.equals("charge"))) {
+                    return;
+                }
+                attackController.markNeedsReload();
+                attackController.setAnimation(new AnimationBuilder().addAnimation("charge", false).addAnimation("idle"));
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void checkFallDamage(double p_184231_1_, boolean p_184231_3_, BlockState p_184231_4_, BlockPos p_184231_5_) {
+        super.checkFallDamage(p_184231_1_, p_184231_3_, p_184231_4_, p_184231_5_);
+        this.fallDistance = Math.min(fallDistance, 10);
+    }
+
+    @Override
+    protected float getWaterSlowDown() {
+        return 1.0f;
+    }
+
+    @Override
+    public void checkDespawn() {
+        if (this.level.getDifficulty() == Difficulty.PEACEFUL && this.shouldDespawnInPeaceful()) {
+            this.remove(RemovalReason.DISCARDED);
+        } else {
+            this.noActionTime = 0;
+        }
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        super.customServerAiStep();
+        this.bossEvent.setProgress(this.getHealth() / this.getMaxHealth());
+    }
+
+    public void startSeenByPlayer(ServerPlayer p_184178_1_) {
+        super.startSeenByPlayer(p_184178_1_);
+        this.bossEvent.addPlayer(p_184178_1_);
+    }
+
+    public void stopSeenByPlayer(ServerPlayer p_184203_1_) {
+        super.stopSeenByPlayer(p_184203_1_);
+        this.bossEvent.removePlayer(p_184203_1_);
+    }
+
+    public boolean canChangeDimensions() {
+        return false;
+    }
+
+    public PlayState crawlController(AnimationEvent arg) {
+        if(arg.isMoving()) {
+            arg.getController().setAnimation(new AnimationBuilder().addAnimation("crawl", true));
+            return PlayState.CONTINUE;
+        }
+        return PlayState.STOP;
+    }
+
+    AnimationController attackController;
+    @Override
+    public void registerControllers(AnimationData data) {
+        data.addAnimationController(new AnimationController(this, "crawl", 1, this::crawlController));
+        attackController = new AnimationController<>(this, "attackController", 1, this::attackPredicate);
+        data.addAnimationController(attackController);
+    }
+
+    private <T extends IAnimatable> PlayState attackPredicate(AnimationEvent<T> tAnimationEvent) {
+        return PlayState.CONTINUE;
+    }
+
+    AnimationFactory factory = new AnimationFactory(this);
+    @Override
+    public AnimationFactory getFactory() {
+        return factory;
     }
 
     public enum Animations{

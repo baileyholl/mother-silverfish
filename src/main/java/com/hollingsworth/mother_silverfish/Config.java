@@ -21,7 +21,7 @@ public class Config {
         SERVER_BUILDER.pop();
         SERVER_BUILDER.comment("Baby Settings").push("babies");
         LEECH_HEAL_AMOUNT = SERVER_BUILDER.comment("How much the leech baby heals the mother").defineInRange("leechHeal", 3, 0.0, 1000);
-        POISON_LEVEL = SERVER_BUILDER.comment("Potion level of poison the poison fish inflicts").defineInRange("poisonLevel", 0, 1, 5);
+        POISON_LEVEL = SERVER_BUILDER.comment("Potion level of poison the poison fish inflicts").defineInRange("poisonLevel", 1, 0, 5);
         POISON_DURATION = SERVER_BUILDER.comment("Duration in ticks the poison lasts").defineInRange("posionDuration", 60, 0, 1000);
         SERVER_CONFIG = SERVER_BUILDER.build();
     }
