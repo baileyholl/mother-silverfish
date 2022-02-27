@@ -62,14 +62,14 @@ public class ChargeGoal extends Goal {
         timeCharging++;
 
 
-        if(timeCharging <= 25 && !isCharging){
+        if(timeCharging <= 30 && !isCharging){
             LivingEntity livingentity = this.boss.getTarget();
             if(livingentity != null)
                 this.boss.getLookControl().setLookAt(livingentity, 30.0F, 30.0F);
             this.boss.getNavigation().stop();
         }
 
-        if(timeCharging > 25 ){
+        if(timeCharging > 30 ){
             isCharging = true;
         }
         if(isCharging) {
@@ -87,7 +87,7 @@ public class ChargeGoal extends Goal {
             attack();
         }
 
-        if(boss != null && boss.getTarget() != null && hasHit && ModUtil.distanceFrom(boss.position(), boss.getTarget().position()) <= 2.0f){
+        if(boss != null && boss.getTarget() != null && hasHit && ModUtil.distanceFrom(boss.position(), boss.getTarget().position()) <= 4.0f){
             endRam();
         }
     }
@@ -122,15 +122,13 @@ public class ChargeGoal extends Goal {
 
     public void endRam(){
         finished = true;
-        if(boss.level.random.nextInt(3) != 0) {
-            boss.chargeCooldown = boss.getChargeCooldown();
-        }
+        boss.chargeCooldown = boss.getChargeCooldown();
         boss.isCharging = false;
         attack();
     }
 
     protected void attack() {
-        List<LivingEntity> nearbyEntities = boss.level.getEntitiesOfClass(LivingEntity.class, new AABB(boss.blockPosition()).inflate(1, 1, 1));
+        List<LivingEntity> nearbyEntities = boss.level.getEntitiesOfClass(LivingEntity.class, new AABB(boss.blockPosition()).inflate(3, 2, 3));
         for(LivingEntity enemy: nearbyEntities){
             if(enemy.equals(boss))
                 continue;

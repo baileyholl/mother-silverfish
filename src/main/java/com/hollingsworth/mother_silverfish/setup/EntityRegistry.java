@@ -19,6 +19,7 @@ public class EntityRegistry {
     public static EntityType<BabyPoisonFish> POISON_FISH = null;
     public static EntityType<HealthStealFish> HEALTH_STEAL_FISH = null;
     public static EntityType<ItemStealFish> ITEM_STEAL_FISH = null;
+    public static EntityType<SpecialFallingBlock> FALLING_BLOCK = null;
 
     @Mod.EventBusSubscriber(modid = MotherSilverfish.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
     public static class RegistrationHandler {
@@ -46,8 +47,12 @@ public class EntityRegistry {
                     EntityType.Builder.of(ItemStealFish::new, MobCategory.MONSTER)
                             .sized(0.5f, 0.5f)
                             .setTrackingRange(10));
+
+            FALLING_BLOCK = build(
+                    "special_falling_block",
+                                EntityType.Builder.<SpecialFallingBlock>of(SpecialFallingBlock::new, MobCategory.MISC).sized(0.98F, 0.98F).clientTrackingRange(10).updateInterval(20));
            event.getRegistry().registerAll(ENTITY_MOTHER_SILVER,
-                   POISON_FISH, HEALTH_STEAL_FISH, ITEM_STEAL_FISH);
+                   POISON_FISH, HEALTH_STEAL_FISH, ITEM_STEAL_FISH, FALLING_BLOCK);
         }
 
         @SubscribeEvent

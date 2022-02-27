@@ -2,6 +2,7 @@ package com.hollingsworth.mother_silverfish.entity;
 
 import com.hollingsworth.mother_silverfish.Config;
 import com.hollingsworth.mother_silverfish.entity.goals.ChargeGoal;
+import com.hollingsworth.mother_silverfish.entity.goals.EarthquakeGoal;
 import com.hollingsworth.mother_silverfish.setup.EntityRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -27,6 +28,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
+import software.bernie.geckolib3.core.builder.Animation;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
 import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
@@ -100,6 +102,8 @@ public class MotherSilverfishEntity extends Monster implements IAnimationListene
         }
         babyFish.setPos(this.position().x, this.position().y,this.position().z);
         babyFish.motherID = this.getId();
+        if(getTarget() != null)
+            babyFish.setTarget(getTarget());
         return babyFish;
     }
 
@@ -107,13 +111,14 @@ public class MotherSilverfishEntity extends Monster implements IAnimationListene
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new ChargeGoal(this));
+        this.goalSelector.addGoal(3, new EarthquakeGoal(this, () -> this.earthquakeCooldown <= 0));
         this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0D, false));
         this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)).setAlertOthers());
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, false));
     }
 
     public int getEarthquakeCooldown(){
-        return 500;
+        return Config.EASY_QUAKE_COOLDOWN.get();
     }
 
     public int getSpawnCooldown(){
@@ -121,7 +126,7 @@ public class MotherSilverfishEntity extends Monster implements IAnimationListene
     }
 
     public int getChargeCooldown(){
-        return 200;
+        return Config.EASY_CHARGE_COOLDOWN.get();
     }
 
     public boolean canCharge(){
@@ -146,8 +151,14 @@ public class MotherSilverfishEntity extends Monster implements IAnimationListene
 
 
     public static AttributeSupplier.Builder attributes() {
-        return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 6.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.28D).add(Attributes.ATTACK_DAMAGE, 2.0f);
+        return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, Config.EASY_MOTHER_HEALTH.get())
+                .add(Attributes.MOVEMENT_SPEED, Config.EASY_MOTHER_MOVE_SPEED.get())
+                .add(Attributes.ATTACK_DAMAGE, Config.EASY_MOTHER_ATTACK_DAMAGE.get())
+                .add(Attributes.ARMOR_TOUGHNESS, Config.EASY_MOTHER_TOUGHNESS.get())
+                .add(Attributes.ARMOR, Config.EASY_MOTHER_ARMOR.get())
+                .add(Attributes.FOLLOW_RANGE, 100)
+                .add(Attributes.KNOCKBACK_RESISTANCE, Config.EASY_MOTHER_KNOCKBACK_RESISTANCE.get())
+                .add(Attributes.ATTACK_KNOCKBACK, Config.EASY_MOTHER_ATTACK_KNOCKBACK.get());
     }
 
     protected Entity.MovementEmission getMovementEmission() {
@@ -190,12 +201,22 @@ public class MotherSilverfishEntity extends Monster implements IAnimationListene
     @Override
     public void startAnimation(int arg) {
         try {
+            if(attackController == null)
+                return;
             if (arg == Animations.CHARGE.ordinal()) {
                 if (attackController.getCurrentAnimation() != null && (attackController.getCurrentAnimation().animationName.equals("charge"))) {
                     return;
                 }
                 attackController.markNeedsReload();
                 attackController.setAnimation(new AnimationBuilder().addAnimation("charge", false).addAnimation("idle"));
+            }
+
+            if (arg == Animations.EARTHQUAKE.ordinal()) {
+                if (attackController.getCurrentAnimation() != null && (attackController.getCurrentAnimation().animationName.equals("slam_master"))) {
+                    return;
+                }
+                attackController.markNeedsReload();
+                attackController.setAnimation(new AnimationBuilder().addAnimation("slam_master", false).addAnimation("idle"));
             }
         }
         catch(Exception e){
@@ -244,8 +265,12 @@ public class MotherSilverfishEntity extends Monster implements IAnimationListene
     }
 
     public PlayState crawlController(AnimationEvent arg) {
+        Animation animation = arg.getController().getCurrentAnimation();
         if(arg.isMoving()) {
-            arg.getController().setAnimation(new AnimationBuilder().addAnimation("crawl", true));
+            if(animation != null && (animation.animationName.equals("slam_master") || animation.animationName.equals("charge")))
+                return PlayState.STOP;
+
+            arg.getController().setAnimation(new AnimationBuilder().addAnimation("crawl", false));
             return PlayState.CONTINUE;
         }
         return PlayState.STOP;

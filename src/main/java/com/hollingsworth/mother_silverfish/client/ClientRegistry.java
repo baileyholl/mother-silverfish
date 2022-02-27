@@ -6,6 +6,7 @@ import com.hollingsworth.mother_silverfish.client.renderer.ItemStealRenderer;
 import com.hollingsworth.mother_silverfish.client.renderer.MotherSilverfishRenderer;
 import com.hollingsworth.mother_silverfish.client.renderer.PoisonFishRenderer;
 import com.hollingsworth.mother_silverfish.setup.EntityRegistry;
+import net.minecraft.client.renderer.entity.FallingBlockRenderer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.EntityRenderersEvent;
@@ -21,5 +22,7 @@ public class ClientRegistry {
         event.registerEntityRenderer(EntityRegistry.HEALTH_STEAL_FISH, HealthStealRenderer::new);
         event.registerEntityRenderer(EntityRegistry.POISON_FISH, PoisonFishRenderer::new);
         event.registerEntityRenderer(EntityRegistry.ITEM_STEAL_FISH, ItemStealRenderer::new);
+        event.registerEntityRenderer(EntityRegistry.FALLING_BLOCK, FallingBlockRenderer::new);
+
     }
 }
