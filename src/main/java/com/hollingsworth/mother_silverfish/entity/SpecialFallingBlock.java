@@ -1,5 +1,6 @@
 package com.hollingsworth.mother_silverfish.entity;
 
+import com.hollingsworth.mother_silverfish.ModUtil;
 import com.hollingsworth.mother_silverfish.setup.EntityRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.Packet;
@@ -10,14 +11,11 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Tier;
-import net.minecraft.world.item.Tiers;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.TierSortingRegistry;
 
 public class SpecialFallingBlock extends FallingBlockEntity {
 
@@ -48,28 +46,10 @@ public class SpecialFallingBlock extends FallingBlockEntity {
     }
 
     public static boolean canBlockBeHarvested(Level world, BlockPos pos){
-        return world.getBlockState(pos).getDestroySpeed(world, pos) >= 0 && isCorrectHarvestLevel(5, world.getBlockState(pos));
+        return (world.getBlockState(pos).getDestroySpeed(world, pos) >= 0 && ModUtil.isCorrectHarvestLevel(5, world.getBlockState(pos))) ||
+                world.getBlockState(pos).is(MotherSilverfishEntity.BREAK_WHITELIST);
     }
 
-    public static boolean isCorrectHarvestLevel(int strength, BlockState state) {
-        Tier tier = switch (strength){
-            case 1:
-                yield Tiers.WOOD;
-            case 2:
-                yield Tiers.STONE;
-            case 3:
-                yield Tiers.IRON;
-            case 4:
-                yield Tiers.DIAMOND;
-            case 5:
-                yield Tiers.NETHERITE;
-            default:
-                yield Tiers.WOOD;
-        };
-        if(strength > 5)
-            tier = Tiers.NETHERITE;
-        return TierSortingRegistry.isCorrectTierForDrops(tier, state);
-    }
 
     @Override
     public boolean canCollideWith(Entity pEntity) {
@@ -88,7 +68,6 @@ public class SpecialFallingBlock extends FallingBlockEntity {
     @Override
     public void tick() {
         super.tick();
-
         if(!level.isClientSide && !didLaunch){
             didLaunch = true;
             level.getEntities(null, getBoundingBox().inflate(1.5, 1.5, 1.5)).forEach(entity -> {
@@ -97,9 +76,6 @@ public class SpecialFallingBlock extends FallingBlockEntity {
                     entity.setDeltaMovement(0, 1.3, 0);
                 }
             });
-
-
         }
     }
-
 }

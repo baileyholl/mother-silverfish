@@ -1,15 +1,19 @@
 package com.hollingsworth.mother_silverfish.entity;
 
 import com.hollingsworth.mother_silverfish.Config;
+import com.hollingsworth.mother_silverfish.MotherSilverfish;
 import com.hollingsworth.mother_silverfish.entity.goals.ChargeGoal;
 import com.hollingsworth.mother_silverfish.entity.goals.EarthquakeGoal;
 import com.hollingsworth.mother_silverfish.setup.EntityRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
@@ -24,6 +28,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Silverfish;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import software.bernie.geckolib3.core.IAnimatable;
@@ -36,6 +41,7 @@ import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
 
 public class MotherSilverfishEntity extends Monster implements IAnimationListener, IAnimatable {
+    public static TagKey<Block> BREAK_WHITELIST = BlockTags.create(new ResourceLocation(MotherSilverfish.MODID, "breakable"));
 
     private final ServerBossEvent bossEvent = (ServerBossEvent)(new ServerBossEvent(this.getDisplayName(), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS)).setDarkenScreen(true).setCreateWorldFog(true).setPlayBossMusic(true);
 
@@ -75,6 +81,7 @@ public class MotherSilverfishEntity extends Monster implements IAnimationListene
             spawnCooldown = getSpawnCooldown();
         }
     }
+
 
     @Override
     public MobType getMobType() {
@@ -187,6 +194,8 @@ public class MotherSilverfishEntity extends Monster implements IAnimationListene
 
     @Override
     public boolean hurt(DamageSource pSource, float pAmount) {
+        if(pSource == DamageSource.LAVA || pSource == DamageSource.IN_WALL || pSource == DamageSource.DROWN)
+            return false;
         return super.hurt(pSource, pAmount);
     }
 
