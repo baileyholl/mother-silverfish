@@ -1,14 +1,23 @@
 package com.hollingsworth.mother_silverfish.entity;
 
 import com.hollingsworth.mother_silverfish.setup.EntityRegistry;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.Tiers;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.TierSortingRegistry;
 
 public class SpecialFallingBlock extends FallingBlockEntity {
 
@@ -19,15 +28,56 @@ public class SpecialFallingBlock extends FallingBlockEntity {
     }
 
 
-    public SpecialFallingBlock(Level world, double v, int y, double v1, BlockState blockState) {
-        super(world, v, y, v1, blockState);
-
+    public SpecialFallingBlock(Level world, double v, double y, double v1, BlockState blockState) {
+        this(EntityRegistry.FALLING_BLOCK, world);
+        this.blockState = blockState;
+        this.blocksBuilding = true;
+        this.setPos(v, y, v1);
+        this.setDeltaMovement(Vec3.ZERO);
+        this.xo = v;
+        this.yo = y;
+        this.zo = v1;
+        this.setStartPos(this.blockPosition());
     }
 
+    public static SpecialFallingBlock fall(Level level, BlockPos pos, BlockState state) {
+        SpecialFallingBlock fallingblockentity = new SpecialFallingBlock(level, (double)pos.getX() + 0.5D, (double)pos.getY(), (double)pos.getZ() + 0.5D, state.hasProperty(BlockStateProperties.WATERLOGGED) ? state.setValue(BlockStateProperties.WATERLOGGED, Boolean.valueOf(false)) : state);
+        level.setBlock(pos, state.getFluidState().createLegacyBlock(), 3);
+        level.addFreshEntity(fallingblockentity);
+        return fallingblockentity;
+    }
+
+    public static boolean canBlockBeHarvested(Level world, BlockPos pos){
+        return world.getBlockState(pos).getDestroySpeed(world, pos) >= 0 && isCorrectHarvestLevel(5, world.getBlockState(pos));
+    }
+
+    public static boolean isCorrectHarvestLevel(int strength, BlockState state) {
+        Tier tier = switch (strength){
+            case 1:
+                yield Tiers.WOOD;
+            case 2:
+                yield Tiers.STONE;
+            case 3:
+                yield Tiers.IRON;
+            case 4:
+                yield Tiers.DIAMOND;
+            case 5:
+                yield Tiers.NETHERITE;
+            default:
+                yield Tiers.WOOD;
+        };
+        if(strength > 5)
+            tier = Tiers.NETHERITE;
+        return TierSortingRegistry.isCorrectTierForDrops(tier, state);
+    }
 
     @Override
     public boolean canCollideWith(Entity pEntity) {
-        return !(pEntity instanceof Player) &&  super.canCollideWith(pEntity);
+        return !(pEntity instanceof Player) && super.canCollideWith(pEntity) && !(pEntity instanceof SpecialFallingBlock);
+    }
+
+    public Packet<?> getAddEntityPacket() {
+        return new ClientboundAddEntityPacket(this, Block.getId(this.getBlockState()));
     }
 
     @Override
@@ -51,4 +101,5 @@ public class SpecialFallingBlock extends FallingBlockEntity {
 
         }
     }
+
 }

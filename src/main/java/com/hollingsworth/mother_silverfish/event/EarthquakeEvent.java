@@ -42,7 +42,7 @@ public class EarthquakeEvent implements ITimedEvent {
     }
 
     public void addPos(BlockPos pos) {
-        if(world.getBlockState(pos).isAir() && !world.getBlockState(pos.below()).isAir()){
+        if(world.getBlockState(pos).isAir() && !world.getBlockState(pos.below()).isAir() && !posList.contains(pos.below())){
             posList.add(pos.below());
             return;
         }
@@ -65,11 +65,10 @@ public class EarthquakeEvent implements ITimedEvent {
 //        }
 
         for(BlockPos p : posList){
-            if(world.getBlockState(p).isAir() || world.getBlockState(p).getMaterial().isReplaceable())
+            if(world.getBlockState(p).isAir() || world.getBlockState(p).getMaterial().isReplaceable() || !SpecialFallingBlock.canBlockBeHarvested(world, p))
                 continue;
-            FallingBlockEntity blockEntity = new SpecialFallingBlock(world,p.getX() + 0.5, p.getY(), p.getZ() + 0.5, world.getBlockState(p));
+            FallingBlockEntity blockEntity = SpecialFallingBlock.fall(world,p, world.getBlockState(p));
             blockEntity.setDeltaMovement(0, 0.6 + EarthquakeEvent.inRange(-0.1, 0.1), 0.0);
-            world.addFreshEntity(blockEntity);
         }
         ticks++;
 

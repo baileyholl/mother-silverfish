@@ -50,7 +50,10 @@ public class EntityRegistry {
 
             FALLING_BLOCK = build(
                     "special_falling_block",
-                                EntityType.Builder.<SpecialFallingBlock>of(SpecialFallingBlock::new, MobCategory.MISC).sized(0.98F, 0.98F).clientTrackingRange(10).updateInterval(20));
+                                EntityType.Builder.<SpecialFallingBlock>of(SpecialFallingBlock::new, MobCategory.MISC)
+                                        .sized(0.98F, 0.98F)
+                                        .setShouldReceiveVelocityUpdates(true)
+                                        .setTrackingRange(256));
            event.getRegistry().registerAll(ENTITY_MOTHER_SILVER,
                    POISON_FISH, HEALTH_STEAL_FISH, ITEM_STEAL_FISH, FALLING_BLOCK);
         }
