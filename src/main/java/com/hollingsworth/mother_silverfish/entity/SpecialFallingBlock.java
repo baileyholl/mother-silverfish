@@ -71,7 +71,7 @@ public class SpecialFallingBlock extends FallingBlockEntity {
         if(!level.isClientSide && !didLaunch){
             didLaunch = true;
             level.getEntities(null, getBoundingBox().inflate(1.5, 1.5, 1.5)).forEach(entity -> {
-                if(entity instanceof LivingEntity) {
+                if(entity instanceof LivingEntity && !(entity instanceof MotherSilverfishEntity)) {
                     entity.hurt(DamageSource.STALAGMITE, 3);
                     entity.setDeltaMovement(0, 1.3, 0);
                 }

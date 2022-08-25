@@ -26,7 +26,8 @@ public class BabyFish extends Silverfish {
 
     public static AttributeSupplier.Builder attributes() {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 6.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.2d).add(Attributes.ATTACK_DAMAGE, 2.0f);
+                .add(Attributes.MOVEMENT_SPEED, 0.2d).add(Attributes.ATTACK_DAMAGE, 2.0f)
+                .add(Attributes.FOLLOW_RANGE, 20f);
     }
 
     @Override
@@ -34,7 +35,7 @@ public class BabyFish extends Silverfish {
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0D, false));
         this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)).setAlertOthers());
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, false));
     }
 
     @Override
