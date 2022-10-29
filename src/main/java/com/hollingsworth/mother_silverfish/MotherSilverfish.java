@@ -24,6 +24,7 @@ public class MotherSilverfish
         // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SERVER_CONFIG);
+        Config.load(Config.SERVER_CONFIG, "mother_silverfish-common.toml");
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
     }

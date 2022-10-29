@@ -1,7 +1,12 @@
 package com.hollingsworth.mother_silverfish;
 
+import com.electronwill.nightconfig.core.file.CommentedFileConfig;
+import com.electronwill.nightconfig.core.io.WritingMode;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.loading.FMLPaths;
+
+import java.nio.file.Path;
 
 @Mod.EventBusSubscriber
 public class Config {
@@ -20,7 +25,7 @@ public class Config {
     public static ForgeConfigSpec.DoubleValue EASY_MOTHER_KNOCKBACK_RESISTANCE;
     public static ForgeConfigSpec.DoubleValue EASY_MOTHER_ATTACK_KNOCKBACK;
     public static ForgeConfigSpec.IntValue EASY_QUAKE_COOLDOWN;
-
+    public static ForgeConfigSpec.IntValue MAX_DAMAGE_TAKEN;
 
     public static ForgeConfigSpec.IntValue EASY_SUMMON_BABY;
     public static ForgeConfigSpec.IntValue EASY_CHARGE_COOLDOWN;
@@ -34,12 +39,14 @@ public class Config {
         EASY_QUAKE_COOLDOWN = SERVER_BUILDER.comment("How often the mother causes an earthquake").defineInRange("easyQuake", 400, 0, 1000);
 
         EASY_MOTHER_HEALTH = SERVER_BUILDER.comment("Mother health").defineInRange("easyHealth", 600.0, 1, Integer.MAX_VALUE);
-        EASY_MOTHER_MOVE_SPEED = SERVER_BUILDER.comment("Mother move speed").defineInRange("easyMovement", 0.28, 0, 10);
+        EASY_MOTHER_MOVE_SPEED = SERVER_BUILDER.comment("Mother move speed").defineInRange("easyMovement", 1.0, 0, 10);
         EASY_MOTHER_ATTACK_DAMAGE = SERVER_BUILDER.comment("Mother attack damage").defineInRange("easyDamage", 8D, 0, 1000);
         EASY_MOTHER_TOUGHNESS = SERVER_BUILDER.comment("Mother toughness").defineInRange("easyToughness", 1d, 0, 1000);
         EASY_MOTHER_ARMOR = SERVER_BUILDER.comment("Mother armor").defineInRange("easyArmor", 6d, 0, 1000);
         EASY_MOTHER_KNOCKBACK_RESISTANCE = SERVER_BUILDER.comment("Mother knockback resistance").defineInRange("easyKnockbackRes", 0.6d, 0, 1000);
         EASY_MOTHER_ATTACK_KNOCKBACK = SERVER_BUILDER.comment("Mother attack knockback").defineInRange("easyAttackKnockback", 1.0d, 0, 1000);
+
+        MAX_DAMAGE_TAKEN = SERVER_BUILDER.comment("Mother max damage taken. 0 will disable this and allow any damage.").defineInRange("maxDamageTaken", 0, 0, 1000);
 
 
 
@@ -52,5 +59,13 @@ public class Config {
 
 
         SERVER_CONFIG = SERVER_BUILDER.build();
+    }
+
+    public static void load(ForgeConfigSpec config, String location) {
+        Path path = FMLPaths.CONFIGDIR.get().resolve(location);
+        CommentedFileConfig data = CommentedFileConfig.builder(path).sync().autosave().writingMode(WritingMode.REPLACE).build();
+
+        data.load();
+        config.setConfig(data);
     }
 }

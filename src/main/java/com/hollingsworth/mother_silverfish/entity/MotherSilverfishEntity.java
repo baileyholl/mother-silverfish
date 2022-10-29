@@ -4,6 +4,7 @@ import com.hollingsworth.mother_silverfish.Config;
 import com.hollingsworth.mother_silverfish.MotherSilverfish;
 import com.hollingsworth.mother_silverfish.entity.goals.ChargeGoal;
 import com.hollingsworth.mother_silverfish.entity.goals.EarthquakeGoal;
+import com.hollingsworth.mother_silverfish.entity.goals.HurtByPlayerGoal;
 import com.hollingsworth.mother_silverfish.setup.EntityRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -17,7 +18,9 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.EntityDamageSource;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
@@ -31,6 +34,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraftforge.common.util.FakePlayer;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.Animation;
@@ -82,6 +86,10 @@ public class MotherSilverfishEntity extends Monster implements IAnimationListene
         }
     }
 
+    @Override
+    public float getSpeed() {
+        return super.getSpeed();
+    }
 
     @Override
     public MobType getMobType() {
@@ -119,8 +127,8 @@ public class MotherSilverfishEntity extends Monster implements IAnimationListene
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new ChargeGoal(this));
         this.goalSelector.addGoal(3, new EarthquakeGoal(this, () -> this.earthquakeCooldown <= 0));
-        this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0D, false));
-        this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)).setAlertOthers());
+        this.goalSelector.addGoal(4, new MeleeAttackGoal(this, Config.EASY_MOTHER_MOVE_SPEED.get(), false));
+        this.targetSelector.addGoal(1, (new HurtByPlayerGoal(this)).setAlertOthers());
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, false));
     }
 
@@ -168,6 +176,26 @@ public class MotherSilverfishEntity extends Monster implements IAnimationListene
                 .add(Attributes.ATTACK_KNOCKBACK, Config.EASY_MOTHER_ATTACK_KNOCKBACK.get());
     }
 
+    @Override
+    public double getAttributeValue(Attribute pAttribute) {
+//        if(pAttribute == Attributes.MAX_HEALTH){
+//            return Config.EASY_MOTHER_HEALTH.get();
+//        }else if(pAttribute == Attributes.MOVEMENT_SPEED){
+//            return Config.EASY_MOTHER_MOVE_SPEED.get();
+//        }else if(pAttribute == Attributes.ATTACK_DAMAGE) {
+//            return Config.EASY_MOTHER_ATTACK_DAMAGE.get();
+//        }else if(pAttribute == Attributes.ARMOR_TOUGHNESS){
+//            return Config.EASY_MOTHER_TOUGHNESS.get();
+//        }else if(pAttribute == Attributes.ARMOR){
+//            return Config.EASY_MOTHER_ARMOR.get();
+//        }else if(pAttribute == Attributes.KNOCKBACK_RESISTANCE){
+//            return Config.EASY_MOTHER_KNOCKBACK_RESISTANCE.get();
+//        }else if(pAttribute == Attributes.ATTACK_KNOCKBACK){
+//            return Config.EASY_MOTHER_ATTACK_KNOCKBACK.get();
+//        }
+        return super.getAttributeValue(pAttribute);
+    }
+
     protected Entity.MovementEmission getMovementEmission() {
         return Entity.MovementEmission.EVENTS;
     }
@@ -196,7 +224,26 @@ public class MotherSilverfishEntity extends Monster implements IAnimationListene
     public boolean hurt(DamageSource pSource, float pAmount) {
         if(pSource == DamageSource.LAVA || pSource == DamageSource.IN_WALL || pSource == DamageSource.DROWN)
             return false;
+        if (pSource instanceof EntityDamageSource entityDamageSource){
+            if(entityDamageSource.getEntity() instanceof FakePlayer){
+                return false;
+            }
+        }
+        if(Config.MAX_DAMAGE_TAKEN.get() > 0){
+            return super.hurt(pSource, Math.min(pAmount, Config.MAX_DAMAGE_TAKEN.get()));
+        }
+
         return super.hurt(pSource, pAmount);
+    }
+
+    @Override
+    public boolean startRiding(Entity pEntity) {
+        return false;
+    }
+
+    @Override
+    public boolean startRiding(Entity pEntity, boolean pForce) {
+        return false;
     }
 
     @Override
