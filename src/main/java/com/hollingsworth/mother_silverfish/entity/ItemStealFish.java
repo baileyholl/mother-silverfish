@@ -1,5 +1,6 @@
 package com.hollingsworth.mother_silverfish.entity;
 
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -47,7 +48,15 @@ public class ItemStealFish extends BabyFish{
                 this.setItemSlot(equipmentslot, ItemStack.EMPTY);
             }
         }
+    }
 
+    @Override
+    public void checkDespawn() {
+        if (this.level.getDifficulty() == Difficulty.PEACEFUL && this.shouldDespawnInPeaceful() && this.getItemBySlot(EquipmentSlot.MAINHAND).isEmpty()) {
+            this.remove(RemovalReason.DISCARDED);
+        } else {
+            this.noActionTime = 0;
+        }
     }
 
     @Override
